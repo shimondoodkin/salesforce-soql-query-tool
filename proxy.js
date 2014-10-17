@@ -5,6 +5,7 @@
  */
 var express = require('express'),
     https = require('https'),
+	http = require('http'),
     path = require('path'),
     request = require('request');
 var fs = require('fs');
@@ -67,6 +68,7 @@ app.get('/', function(req, res) {
   res.type('.html').send( fs.readFileSync('public/index.html'));
 });
 
-https.createServer({    key:  fs.readFileSync('key.pem'),    cert: fs.readFileSync('cert.pem')},app).listen(app.get('port'), function () {
+//https.createServer({    key:  fs.readFileSync('key.pem'),    cert: fs.readFileSync('cert.pem')},app).listen(app.get('port'), function () {
+http.createServer(app).listen(app.get('port'), function () {
   console.log("Express server listening on port " + app.get('port'));
 });
