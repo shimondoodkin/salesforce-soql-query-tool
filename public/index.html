@@ -1,15 +1,11 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>leumi</title>
-	<link rel="stylesheet" href="vakata-jstree-aa240c1/dist/themes/default/style.min.css" />
-	<link rel="stylesheet" href="famfamfam_silk_icons_v013/icons.css" />
-
-    <!--[if lt IE 9]>
+    <title>salesforce SOQL query</title>
+	<!--[if lt IE 9]>
     <script src="http://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.2/html5shiv.js"></script>
     <![endif]-->
 <script src="vakata-jstree-aa240c1/dist/libs/jquery.js"></script>
-<script src="vakata-jstree-aa240c1/dist/jstree.min.js"></script>
 <script src="jsforce-master/build/jsforce.min.js">
 //cdn availible: //cdnjs.cloudflare.com/ajax/libs/jsforce/1.3.1/jsforce.min.js
 </script>
@@ -63,7 +59,7 @@ $(function () {
 <script>
 jsforce.browser.init({
   clientId: '3MVG9xOCXq4ID1uHdeGOJqq3lgaFOTYcyzWZpWFnHF_3YbxYOevGjDMTglqqsPCrwaVDHL.En4OFljUNv7Wcu',
-  redirectUri: 'https://bnetgames.com/files/hashredirect.html?url=http%3A%2F%2Fdirect.doodkin.com%3A8080%2F',
+  redirectUri: 'https://bnetgames.com/files/hashredirect.html?url=http%3A%2F%2Fsalesforce-jsforce-proxy.herokuapp.com%2F',
   proxyUrl: 'http://direct.doodkin.com:8080/proxy/'});
 /*
 jsforce.browser.login('jordan@johns.blhack', 'leumihack14', function(err, userInfo) {
@@ -283,7 +279,7 @@ return true;
  </head>
   <body>
 
-  <h1>salesforce SOQL query</h1>
+  <h1>Salesforce SOQL query</h1>
   
   <button onclick="javascript:jsforce.browser.login();">Login</button>  
   <label><input type="checkbox" id="alltables">alltables</label>
