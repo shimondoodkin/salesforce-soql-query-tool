@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>javascript redirect preserving #hashtag after redirect</title>
+<script language="javscript" type="text/javascript">
+if(location.search.indexOf('?url=')!=-1 && location.search.substring('?url='.length).length>0)
+{
+var url=decodeURIComponent(location.search.substring('?url='.length))+location.hash;
+//document.getElementById('main').innerHTML='<a href="'+url+'">redirecting...</a>'
+location.href=url
+}
+</script>
+</head>
+<body>
+<div id="main">
+<p>
+if you host on heroku you dont need this just change <b>http</b>://yourapp.herokuapp.com/ to <b>https</b>://yourapp.herokuapp.com/.
+but if you use this elsewhere where you dont have ssl you might use this.
+also i guess salsforce would allow to redirect to http://localhost without ssl
+</p>
+<p>
+I have found an <b>insecure</b> solution for Salesforce requirement to redirect only to https url problem,
+which is irrelevan if you develop for testing only. I have developed a redirect mechanizm using JavaScript
+that preserves the hash after the redirect. if you host your application on an http server. you can use the
+result url as oauth redirect url. put it in your application and in oauth settings.
+</p>
+<p>
+there is a hosted version of this at <a href=https://salesforce-jsforce-proxy.herokuapp.com/hashredirect.html">https://salesforce-jsforce-proxy.herokuapp.com/hashredirect.html</a>
+</p>
+type url here: <input type="text" size=65 id="urlin">
+<input value="generate redirect url" type="button" onclick="document.getElementById('urlout').value=(location.href.split('?')[0])+'?url='+encodeURIComponent(document.getElementById('urlin').value)"><br>
+result:  <input type="text" size=65 id="urlout">
+</div>
+</body>
+</html>
+

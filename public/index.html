@@ -12,10 +12,10 @@
 //
 jsforce.browser.init({
   clientId: '3MVG9xOCXq4ID1uHdeGOJqq3lgaFOTYcyzWZpWFnHF_3YbxYOevGjDMTglqqsPCrwaVDHL.En4OFljUNv7Wcu', // get this from your connected app oauth configuration: Setup (near username at top)> Build > Create > Apps > Connected Apps: [new] or [edit] your app > API (Enable OAuth Settings)
-  redirectUri: 'https://bnetgames.com/files/hashredirect.html?url=http%3A%2F%2Fsalesforce-jsforce-proxy.herokuapp.com%2F', // go to https://bnetgames.com/files/hashredirect.html, type your url, rewrite this and type it in your connected app oauth configuration.
-  proxyUrl: 'http://salesforce-jsforce-proxy.herokuapp.com/proxy/'}); //salesforce CORS fix, you can keep it, in the proxy there are CORS availible.
-  //if you setup salesforce sub domain in salesforce you don't need proxy 
-  
+  redirectUri: 'https://salesforce-jsforce-proxy.herokuapp.com',  // on heroku just change the 'http://' to 'https://'. apps on yourapp.herokuapp.com has shared ssl for free.
+  proxyUrl: 'https://salesforce-jsforce-proxy.herokuapp.com/proxy/'}); //salesforce CORS fix, you can keep my url. this proxy has CORS headers for any domain.
+  //if you setup salesforce sub domain in salesforce you don't need proxy
+
 jsforce.browser.on('connect', function(conn) {
   window.conn=conn // you can play with conn variable in the Javascript Console
   
@@ -28,18 +28,23 @@ jsforce.browser.on('connect', function(conn) {
     console.log(res);
   });
   */
+  /*
+  //apex example:
+  //get
+  conn.apex.get("/MyTestApexRest/",  function(err, res) {
+    if (err) { return console.error(err); }
+    console.log("response: ", res);
+  });
+  //post
+  var body = { title: 'hello', num : 1 };
+  conn.apex.post("/MyTestApexRest/", body, function(err, res) {
+    if (err) { return console.error(err); }
+    console.log("response: ", res);
+  });
+  */
 });
 
-/*
-apex example:
-// body payload structure is depending to the Apex REST method interface.
-var body = { title: 'hello', num : 1 };
-conn.apex.post("/MyTestApexRest/", body, function(err, res) {
-  if (err) { return console.error(err); }
-  console.log("response: ", res);
-  // the response object structure depends on the definition of apex class
-});
-*/
+
 
 function runquery()
 {
@@ -77,8 +82,9 @@ function remove_attributes(res)
 
 function listqueries(dontfiltertables,dontfilterfields)
 {
-	$('#result')[0].value='';
     if(!window.conn)return jsforce.browser.login();
+	
+	$('#result')[0].value='';
     window.r={};
 	$("#choose").empty();
 	var option = document.createElement("option");option.value="";option.text="clear";	$('#choose')[0].options.add(option);
