@@ -197,7 +197,8 @@ return true;
   <textarea id="query" style="width:75%" rows=16></textarea><br>
   <textarea id="result" style="width:75%" rows=32></textarea><br>
   <pre style="color:lightgray">
-  there is r variable in console, example code to filter result:
+  to run a query, delete the relationships after the query.
+  there is r variable in console of the last result, example code to filter result:
   var r2=r.filter(function(a){return a.custom||a.name=="Id"||a.name=="Name"})
   r2.map(function(a){return {name:a.name,type:a.type}}) // choose few
   r2.map(function(a){return a.name}) // or choose one
