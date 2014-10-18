@@ -16,8 +16,6 @@ jsforce.browser.init({
   proxyUrl: 'http://salesforce-jsforce-proxy.herokuapp.com/proxy/'}); //salesforce CORS fix, you can keep it, in the proxy there are CORS availible.
   //if you setup salesforce sub domain in salesforce you don't need proxy 
   
-  //sample dev account: 'jordan@johns.blhack', 'leumihack14' please don't modify anything just use it to watch if you don't have your account
-  
 jsforce.browser.on('connect', function(conn) {
   window.conn=conn // you can play with conn variable in the Javascript Console
   
@@ -205,6 +203,7 @@ return true;
   r2.forEach(function(a){console.log(JSON.stringify(a, null, 2))}) // print for each
   console.log(JSON.stringify(r2, null, 2)) // print as is
   //records you see is the result textarea are with attributes property removed from records
+  sample dev account: 'jordan@johns.blhack', 'leumihack14' please don't modify anything just use it to watch if you don't have your account
   </pre>
   
   </body>
