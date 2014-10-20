@@ -363,6 +363,7 @@ function d3table(data,divselector)
 {
 	
 d3.select(divselector)
+    .selectAll("*").remove()
     .append("table")
     .style("border-collapse", "collapse")
     .style("border", "2px black solid")
