@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>SOQL query</title>
+	<!--[if lt IE 9]>
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.2/html5shiv.js"></script>
+    <![endif]-->
+
+	
+<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.8.0/jquery.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/jsforce/1.3.1/jsforce.min.js"></script>
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/async/0.9.0/async.js"></script>
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.4.13/d3.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/nvd3/1.1.15-beta/nv.d3.min.js"></script>
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/nvd3/1.1.15-beta/nv.d3.min.css">
+
+<script>
+if(location.protocol=='http:')location.href='https'+location.href.substring(4); // otherwise it is unable to go back to this window and the application stays in the popup
+// this file is html only application without server side, you can copy it to any server just generate your clientId and update the redirect url
+//
+
+
+	
+jsforce.browser.init({
+  clientId: '3MVG9xOCXq4ID1uHdeGOJqq3lgVmEeA0Tlk_sUdXaOc8k.8kzNgHzSn7QE5hXFUh3Rf3Ihaxbt5kedIVDCOy_', // get this from your connected app oauth configuration: Setup (near username at top)> Build > Create > Apps > Connected Apps: [new] or [edit] your app > API (Enable OAuth Settings)
+  redirectUri: 'https://direct.doodkin.com:8080/',  // on heroku just change the 'http://' to 'https://'. apps on yourapp.herokuapp.com has shared ssl for free.
+  proxyUrl: 'https://salesforce-jsforce-proxy.herokuapp.com/proxy/'}); //salesforce CORS fix, you can keep my url. this proxy has CORS headers for any domain.
+  //if you setup salesforce sub domain in salesforce you don't need proxy
+
+jsforce.browser.on('connect', function(conn) {
+  window.conn=conn // you can play with conn variable in the Javascript Console
+  load_contacts();
+  //listqueries();
+	
+  /*
+  //run a simple query on login
+  conn.query('SELECT Id, Name FROM Account', function(err, res) {
+    if (err) { return console.error(err); }
+    console.log(res);
+  });
+  */
+  /*
+  //apex example:
+  //get
+  conn.apex.get("/MyTestApexRest/",  function(err, res) {
+    if (err) { return console.error(err); }
+    console.log("response: ", res);
+  });
+  //post
+  var body = { title: 'hello', num : 1 };
+  conn.apex.post("/MyTestApexRest/", body, function(err, res) {
+    if (err) { return console.error(err); }
+    console.log("response: ", res);
+  });
+  */
+});
+
+/*
+example:
+	async.waterfall([
+    function(callback){
+        callback(null, 'one', 'two');
+    },
+    function(arg1, arg2, callback){
+      // arg1 now equals 'one' and arg2 now equals 'two'
+        callback(null, 'three');
+    },
+    function(arg1, callback){
+        // arg1 now equals 'three'
+        callback(null, 'done');
+    }
+], function (err, result) {
+   // result now equals 'done'    
+});
+*/
+
+function load_contacts(cb)
+{
+	//load only contacts  with data
+	async.waterfall([
+    function(cb)
+	{
+		var query="SELECT Bank_Account__c FROM Bank_Account_Transaction__c GROUP BY Bank_Account__c"
+		console.log(query)
+		conn.query(query, cb); 
+	},
+    function(res,cb)
+	{
+		var query="SELECT Customer__c FROM Bank_Account__c WHERE Id IN ('"+(res.records.map(function(a){return a.Bank_Account__c}).join("','"))+"') GROUP BY Customer__c"
+		console.log(query)
+		conn.query(query, cb); 
+	},
+    function(res,cb)
+	{
+		var query="SELECT  Contact__c  FROM Ownership__c WHERE Customer__c IN ('"+(res.records.map(function(a){return a.Customer__c}).join("','"))+"') GROUP BY Contact__c"
+		console.log(query)
+		conn.query(query, cb); 
+	},
+    function(res,cb)
+	{
+	    var query="SELECT Id, Name, Level__c, Languages__c, Title__c, Bank_Empoyee__c, ID_Method__c, ID_Number__c, Gender__c, Primary_Language__c, Primary_Phone__c, Duality__c, Disability_special_treatment__c, Disability__c, Senior_Mgmt__c, Occupation__c, of_Children__c, Marital_Status__c, Relation_Type__c, Frequency_of_visits_to_the_branch__c, Product__c, Related_Contact__c FROM Contact WHERE Id IN ('"+(res.records.map(function(a){return a.Contact__c}).join("','"))+"')"
+		console.log(query)
+		conn.query(query, cb); 
+	}
+	
+], function (err, res) {
+  
+  	if (err) { console.log(err.stack); return}
+	fillselect(res)
+	 
+});
+
+  function fillselect(res)
+  {
+	
+	$("#contacts").empty();	$('#contacts')[0].options.add((function(){ var option = document.createElement("option"); option.value=""; option.text="select contact"; return option;})());
+	//$("#customers").empty();	$('#customers')[0].options.add((function(){ var option = document.createElement("option"); option.value=""; option.text="select customer"; return option;})());
+	//$("#accounts").empty();	$('#accounts')[0].options.add((function(){ var option = document.createElement("option"); option.value=""; option.text="select account"; return option;})());
+	
+	res.records.forEach(function(r){
+	 $('#contacts')[0].options.add((function(){ var option = document.createElement("option"); option.value=r.Id; option.text=r.Name; return option;})());
+	})
+	if($('#contacts')[0].options.length>1){ $('#contacts')[0].selectedIndex=1;load_customers($('#contacts')[0].options[1].value,cb) }   else
+	if(cb)cb();
+  }
+}
+
+
+function load_customers(contactid,cb)
+{
+ 	//load only customers  with data
+	async.waterfall([
+    function(cb)
+	{
+		var query="SELECT Bank_Account__c FROM Bank_Account_Transaction__c GROUP BY Bank_Account__c"
+		console.log(query)
+		conn.query(query, cb); 
+	},
+    function(res,cb)
+	{
+		var query="SELECT Customer__c FROM Bank_Account__c WHERE Id IN ('"+(res.records.map(function(a){return a.Bank_Account__c}).join("','"))+"') GROUP BY Customer__c"
+		console.log(query)
+		conn.query(query, cb); 
+	},
+    function(res,cb)
+	{
+		//var query="SELECT Id, Name, Customer_Number__c, Primary_Segment__c, Branch_del_del__c FROM Customer__c WHERE Id IN (SELECT Customer__c FROM Ownership__c WHERE Contact__c ='"+contactid+"') AND Id IN ('"+(res.records.map(function(a){return a.Customer__c}).join("','"))+"')"
+		var query="SELECT Id, Name, Customer_Number__c, Primary_Segment__c, Branch_del_del__c FROM Customer__c WHERE Id IN (SELECT Customer__c FROM Ownership__c WHERE Contact__c ='"+contactid+"') AND Id IN ('"+(res.records.map(function(a){return a.Customer__c}).join("','"))+"')"
+		console.log(query)
+		conn.query(query, cb); 
+	}
+	
+], function (err, res) {
+  
+  	if (err) { console.log(err.stack); return}
+	fillselect(res)
+	 
+});
+
+  function fillselect(res)
+  {
+	
+	$("#customers").empty(); $('#customers')[0].options.add((function(){ var option = document.createElement("option"); option.value=""; option.text="select customer"; return option;})());
+	//$("#accounts").empty();	  $('#accounts')[0].options.add((function(){ var option = document.createElement("option"); option.value=""; option.text="select account"; return option;})());
+	
+	res.records.forEach(function(r){
+	 $('#customers')[0].options.add((function(){ var option = document.createElement("option"); option.value=r.Id; option.text=r.Name; return option;})());
+	})
+	if($('#customers')[0].options.length>1){ $('#customers')[0].selectedIndex=1;load_accounts($('#customers')[0].options[1].value,cb) }   else
+    if(cb)cb();
+  };
+}
+
+
+function load_accounts(customerid,cb)
+{
+	//load only customers  with data
+	async.waterfall([
+    function(cb)
+	{
+		var query="SELECT Bank_Account__c FROM Bank_Account_Transaction__c GROUP BY Bank_Account__c"
+		console.log(query)
+		conn.query(query, cb); 
+	},
+    function(res,cb)
+	{
+		var query="SELECT Id, Name, Type_of_Account__c, Account_Number__c, Customer__c FROM Bank_Account__c WHERE Customer__c = '"+customerid+"' AND Id IN ('"+(res.records.map(function(a){return a.Bank_Account__c}).join("','"))+"')"
+		console.log(query)
+		conn.query(query, cb); 
+	}
+], function (err, res) {
+  
+  	if (err) { console.log(err.stack); return}
+	fillselect(res)
+	 
+});
+  
+  function fillselect(res)
+  {
+	
+	$("#accounts").empty();	$('#accounts')[0].options.add((function(){ var option = document.createElement("option"); option.value=""; option.text="select account"; return option;})());
+	
+	res.records.forEach(function(r){
+	 $('#accounts')[0].options.add((function(){ var option = document.createElement("option"); option.value=r.Id; option.text=r.Name; return option;})());
+	})
+	if($('#accounts')[0].options.length>1){ $('#accounts')[0].selectedIndex=1;	load_transactions($('#accounts')[0].options[1].value,cb)	}   else	
+    if(cb)cb();
+  };
+}
+
+
+
+function load_transactions(accountid,cb)
+{
+  var query="SELECT Id, Name, Date__c, Description__c, Transaction_Type__c, Amount__c, Reference__c, Running_Balance__c, CategoryID__c, Bank_Account__c, Account_ID__c FROM Bank_Account_Transaction__c   WHERE Bank_Account__c= '"+accountid+"' ORDER BY Date__c ASC,Id ASC"
+  console.log(query)
+  conn.query(query, function(err, res) {
+	if (err) { console.log(err.stack); return}
+	drawchart(res)
+  });
+  
+  function drawchart(res)
+  {
+	r=res;
+    console.log(res);
+
+	nvbarchart(res.records.map(function(a,i){return {label:(i+1)+")"+a.Date__c,value:a.Amount__c}}),'#chart')
+	nvbarchart(res.records.map(function(a,i){return {label:(i+1)+")"+a.Date__c,value:a.Running_Balance__c}}),'#chart2')
+	//nvlinechart(res.records.map(function(a,i){return {x:(i+1),y:a.Running_Balance__c}}),'#chart2')
+	//nvbarchart(res.records.map(function(a,i){return {label:(i+1)+")"+a.Date__c,value:a.Running_Balance__c} }),'#chart2')
+	var d=res.records.map(function(a,i){return [(i+1),a.Id, a.Date__c, a.Description__c, a.Transaction_Type__c, a.Amount__c, a.Reference__c, a.Running_Balance__c, a.CategoryID__c, a.Bank_Account__c, a.Account_ID__c]})
+	d.unshift(["n","Id", "Date__c", "Description__c", "Transaction_Type__c", "Amount__c", "Reference__c", "Running_Balance__c", "CategoryID__c", "Bank_Account__c", "Account_ID__c"])
+	d3table(d,'#table');
+    if(cb)cb();
+  };
+}
+
+
+function nvbarchart(data,divselector)
+{
+	nv.addGraph(function() {
+	  var chart = nv.models.discreteBarChart()
+		  .x(function(d) { return d.label })    //Specify the data accessors.
+		  .y(function(d) { return d.value })
+		  .staggerLabels(true)    //Too many bars and not enough room? Try staggering labels.
+		  .tooltips(false)        //Don't show tooltips
+		  .showValues(true)       //...instead, show the bar value right on top of each bar.
+		  .transitionDuration(350)
+		  ;
+
+	  d3.select(divselector+' svg')
+		  .datum(getData())
+		  .call(chart);
+
+	  nv.utils.windowResize(chart.update);
+
+	  return chart;
+	});
+
+	//Each bar represents a single discrete quantity.
+	function getData() {
+	 return  [ 
+		{
+		  key: "Value",
+		  values: data/*[
+			{ 
+			  "label" : "A Label" ,
+			  "value" : -29.765957771107
+			} , 
+			{ 
+			  "label" : "F Label" , 
+			  "value" : -98.079782601442
+			} 
+		  ]*/
+		}
+	  ]
+
+	}
+
+}
+
+function nvlinechart(data,divselector)
+{
+	/*These lines are all chart setup.  Pick and choose which chart features you want to utilize. */
+	nv.addGraph(function() {
+	  var chart = nv.models.lineChart()
+					.margin({left: 100})  //Adjust chart margins to give the x-axis some breathing room.
+					.useInteractiveGuideline(true)  //We want nice looking tooltips and a guideline!
+					.transitionDuration(350)  //how fast do you want the lines to transition?
+					.showLegend(true)       //Show the legend, allowing users to turn on/off line series.
+					.showYAxis(true)        //Show the y-axis
+					.showXAxis(true)        //Show the x-axis
+	  ;
+
+	  chart.xAxis     //Chart x-axis settings
+		  .axisLabel('n')
+		  .tickFormat(d3.format(',r'));
+
+	  chart.yAxis     //Chart y-axis settings
+		  .axisLabel('Value (v)')
+		  .tickFormat(d3.format('.02f'));
+
+	  /* Done setting the chart up? Time to render it!*/
+	  var myData = getData();   //You need data...
+
+	  d3.select(divselector+' svg')    //Select the <svg> element you want to render the chart in.   
+		  .datum(myData)         //Populate the <svg> element with chart data...
+		  .call(chart);          //Finally, render the chart!
+
+	  //Update the chart when window resizes.
+	  nv.utils.windowResize(function() { chart.update() });
+	  return chart;
+	});
+	/**************************************
+	 * Simple test data generator
+	 */
+	function getData() {
+	 return [
+		{
+		  values: data,      //values - represents the array of {x,y} data points
+		  key: 'Value', //key  - the name of the series.
+		  color: '#ff7f0e'  //color - optional: choose your own line color.
+		}];
+	/*
+	  var sin = [],sin2 = [],
+		  cos = [];
+
+	  //Data is represented as an array of {x,y} pairs.
+	  for (var i = 0; i < 100; i++) {
+		sin.push({x: i, y: Math.sin(i/10)});
+		sin2.push({x: i, y: Math.sin(i/10) *0.25 + 0.5});
+		cos.push({x: i, y: .5 * Math.cos(i/10)});
+	  }
+
+	  //Line chart data should be sent as an array of series objects.
+	  return [
+		{
+		  values: [{x:1,y:3.5},{x:2,y:3.5},{x:3,y:3.5}],      //values - represents the array of {x,y} data points
+		  key: 'Data', //key  - the name of the series.
+		  color: '#ff7f0e'  //color - optional: choose your own line color.
+		},
+		{
+		  values: cos,
+		  key: 'Cosine Wave',
+		  color: '#2ca02c'
+		},
+		{
+		  values: sin2,
+		  key: 'Another sine wave',
+		  color: '#7777ff',
+		  area: true      //area - set to true if you want this line to turn into a filled area chart.
+		}
+	  ];*/
+	}
+}
+
+
+function d3table(data,divselector)
+{
+	
+d3.select(divselector)
+    .append("table")
+    .style("border-collapse", "collapse")
+    .style("border", "2px black solid")
+    
+    .selectAll("tr")
+    .data(data)
+    .enter().append("tr")
+    
+    .selectAll("td")
+    .data(function(d){return d;})
+    .enter().append("td")
+    .style("border", "1px black solid")
+    .style("padding", "10px")
+    .on("mouseover", function(){d3.select(this).style("background-color", "aliceblue")}) 
+    .on("mouseout", function(){d3.select(this).style("background-color", "white")}) 
+    .text(function(d){return d;})
+    .style("font-size", "12px");
+}
+
+</script>
+ </head>
+  <body>
+  <button onclick="javascript:jsforce.browser.login();">Login</button>  
+  
+  <select id="contacts" onchange="load_customers(this.options[this.selectedIndex].value)">
+   <option value="">click &quot;login&quot; to see contacts</option>
+  </select>
+  
+  <select id="customers" onchange="load_accounts(this.options[this.selectedIndex].value)">
+   <option value="">select a contact</option>
+  </select>
+  
+  <select id="accounts" onchange="load_transactions(this.options[this.selectedIndex].value)">
+   <option value="">select a customer</option>
+  </select>
+  <br>
+  <br>
+  <div id="chart" style="height: 300px; min-width: 310px;border:1px solid black;">
+    <svg style='height:300px'> </svg>
+  </div>
+  <div id="chart2" style="height: 300px; min-width: 310px;border:1px solid black;">
+    <svg style='height:300px'> </svg>
+  </div>
+  
+  <div id="table">
+    
+  </div>
+  
+  </body>
+</html>

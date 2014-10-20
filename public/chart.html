@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>SOQL query</title>
+	<!--[if lt IE 9]>
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.2/html5shiv.js"></script>
+    <![endif]-->
+
+	
+<script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.4.13/d3.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/nvd3/1.1.15-beta/nv.d3.min.js"></script>
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/nvd3/1.1.15-beta/nv.d3.min.css">
+
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.8.0/jquery.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/jsforce/1.3.1/jsforce.min.js"></script>
+<script>
+if(location.protocol=='http:')location.href='https'+location.href.substring(4); // otherwise it is unable to go back to this window and the application stays in the popup
+// this file is html only application without server side, you can copy it to any server just generate your clientId and update the redirect url
+//
+
+jsforce.browser.init({
+  clientId: '3MVG9xOCXq4ID1uHdeGOJqq3lgVmEeA0Tlk_sUdXaOc8k.8kzNgHzSn7QE5hXFUh3Rf3Ihaxbt5kedIVDCOy_', // get this from your connected app oauth configuration: Setup (near username at top)> Build > Create > Apps > Connected Apps: [new] or [edit] your app > API (Enable OAuth Settings)
+  redirectUri: 'https://direct.doodkin.com:8080/',  // on heroku just change the 'http://' to 'https://'. apps on yourapp.herokuapp.com has shared ssl for free.
+  proxyUrl: 'https://salesforce-jsforce-proxy.herokuapp.com/proxy/'}); //salesforce CORS fix, you can keep my url. this proxy has CORS headers for any domain.
+  //if you setup salesforce sub domain in salesforce you don't need proxy
+
+jsforce.browser.on('connect', function(conn) {
+  window.conn=conn // you can play with conn variable in the Javascript Console
+  load_contacts();
+  //listqueries();
+	
+  /*
+  //run a simple query on login
+  conn.query('SELECT Id, Name FROM Account', function(err, res) {
+    if (err) { return console.error(err); }
+    console.log(res);
+  });
+  */
+  /*
+  //apex example:
+  //get
+  conn.apex.get("/MyTestApexRest/",  function(err, res) {
+    if (err) { return console.error(err); }
+    console.log("response: ", res);
+  });
+  //post
+  var body = { title: 'hello', num : 1 };
+  conn.apex.post("/MyTestApexRest/", body, function(err, res) {
+    if (err) { return console.error(err); }
+    console.log("response: ", res);
+  });
+  */
+});
+
+function load_contacts(cb)
+{
+  var query='SELECT Id, Name, Level__c, Languages__c, Title__c, Bank_Empoyee__c, ID_Method__c, ID_Number__c, Gender__c, Primary_Language__c, Primary_Phone__c, Duality__c, Disability_special_treatment__c, Disability__c, Senior_Mgmt__c, Occupation__c, of_Children__c, Marital_Status__c, Relation_Type__c, Frequency_of_visits_to_the_branch__c, Product__c, Related_Contact__c FROM Contact'
+  console.log(query)
+  conn.query(query, function(err, res) {
+	if (err) { console.log(err.stack); return}
+	
+	$("#contacts").empty();	$('#contacts')[0].options.add((function(){ var option = document.createElement("option"); option.value=""; option.text="select contact"; return option;})());
+	//$("#customers").empty();	$('#customers')[0].options.add((function(){ var option = document.createElement("option"); option.value=""; option.text="select customer"; return option;})());
+	//$("#accounts").empty();	$('#accounts')[0].options.add((function(){ var option = document.createElement("option"); option.value=""; option.text="select account"; return option;})());
+	
+	res.records.forEach(function(r){
+	 $('#contacts')[0].options.add((function(){ var option = document.createElement("option"); option.value=r.Id; option.text=r.Name; return option;})());
+	})
+	if($('#contacts')[0].options.length>1){ $('#contacts')[0].selectedIndex=1;load_customers($('#contacts')[0].options[1].value,cb) }   else
+	if(cb)cb();
+  });
+}
+
+
+function load_customers(contactid,cb)
+{
+  var query="SELECT Id, Name, Customer_Number__c, Primary_Segment__c, Branch_del_del__c FROM Customer__c WHERE Id IN (SELECT Customer__c FROM Ownership__c WHERE Contact__c ='"+contactid+"')"
+  console.log(query)
+  conn.query(query, function(err, res) {
+	if (err) { console.log(err.stack); return}
+	
+	$("#customers").empty(); $('#customers')[0].options.add((function(){ var option = document.createElement("option"); option.value=""; option.text="select customer"; return option;})());
+	//$("#accounts").empty();	  $('#accounts')[0].options.add((function(){ var option = document.createElement("option"); option.value=""; option.text="select account"; return option;})());
+	
+	res.records.forEach(function(r){
+	 $('#customers')[0].options.add((function(){ var option = document.createElement("option"); option.value=r.Id; option.text=r.Name; return option;})());
+	})
+	if($('#customers')[0].options.length>1){ $('#customers')[0].selectedIndex=1;load_accounts($('#customers')[0].options[1].value,cb) }   else
+    if(cb)cb();
+  });
+}
+
+
+function load_accounts(customerid,cb)
+{
+  var query="SELECT Id, Name, Type_of_Account__c, Account_Number__c, Customer__c FROM Bank_Account__c WHERE Customer__c = '"+customerid+"'"
+  console.log(query)
+  conn.query(query, function(err, res) {
+	if (err) { console.log(err.stack); return}
+	
+	$("#accounts").empty();	$('#accounts')[0].options.add((function(){ var option = document.createElement("option"); option.value=""; option.text="select account"; return option;})());
+	
+	res.records.forEach(function(r){
+	 $('#accounts')[0].options.add((function(){ var option = document.createElement("option"); option.value=r.Id; option.text=r.Name; return option;})());
+	})
+	if($('#accounts')[0].options.length>1){ $('#accounts')[0].selectedIndex=1;	load_transactions($('#accounts')[0].options[1].value,cb)	}   else	
+    if(cb)cb();
+  });
+}
+
+function nvbarchart(data)
+{
+	nv.addGraph(function() {
+	  var chart = nv.models.discreteBarChart()
+		  .x(function(d) { return d.label })    //Specify the data accessors.
+		  .y(function(d) { return d.value })
+		  .staggerLabels(true)    //Too many bars and not enough room? Try staggering labels.
+		  .tooltips(false)        //Don't show tooltips
+		  .showValues(true)       //...instead, show the bar value right on top of each bar.
+		  .transitionDuration(350)
+		  ;
+
+	  d3.select('#chart svg')
+		  .datum(exampleData())
+		  .call(chart);
+
+	  nv.utils.windowResize(chart.update);
+
+	  return chart;
+	});
+
+	//Each bar represents a single discrete quantity.
+	function exampleData() {
+	 return  [ 
+		{
+		  key: "Value",
+		  values: data/*[
+			{ 
+			  "label" : "A Label" ,
+			  "value" : -29.765957771107
+			} , 
+			{ 
+			  "label" : "F Label" , 
+			  "value" : -98.079782601442
+			} 
+		  ]*/
+		}
+	  ]
+
+	}
+
+}
+
+
+function load_transactions(accountid,cb)
+{
+  var query="SELECT Id, Name, Date__c, Description__c, Transaction_Type__c, Amount__c, Reference__c, Running_Balance__c, CategoryID__c, Bank_Account__c, Account_ID__c FROM Bank_Account_Transaction__c   WHERE Bank_Account__c= '"+accountid+"' ORDER BY Date__c ASC"
+  console.log(query)
+  conn.query(query, function(err, res) {
+	if (err) { console.log(err.stack); return}
+	r=res;
+    console.log(res);
+	//basic_time([res.records.map(function(a){return [new Date(a.Date__c).getTime(),a.Running_Balance__c]})],document.getElementById("chart"));
+	/*basic_bars(	res.records.map(function(a,i){return a.Date__c}),	[
+	res.records.map(function(a,i){return [i,a.Amount__c]}),
+	//res.records.map(function(a,i){return [i,a.Running_Balance__c]})
+	],document.getElementById("chart"),true);
+	*/
+	var i=0;
+	nvbarchart(res.records.map(function(a,i){return {label:(++i)+")"+a.Date__c,value:a.Amount__c}}))
+
+    if(cb)cb();
+  });
+}
+
+
+
+
+</script>
+ </head>
+  <body>
+  <button onclick="javascript:jsforce.browser.login();">Login</button>  
+  
+  <select id="contacts" onchange="load_customers(this.options[this.selectedIndex].value)">
+   <option value="">click &quot;login&quot; to see contacts</option>
+  </select>
+  
+  <select id="customers" onchange="load_accounts(this.options[this.selectedIndex].value)">
+   <option value="">select a contact</option>
+  </select>
+  
+  <select id="accounts" onchange="load_transactions(this.options[this.selectedIndex].value)">
+   <option value="">select a customer</option>
+  </select>
+  <br>
+  <br>
+  <div id="chart" style="height: 500px; min-width: 310px;border:1px solid black;">
+    <svg style='height:500px'> </svg>
+	</div>
+  
+  </body>
+</html>
