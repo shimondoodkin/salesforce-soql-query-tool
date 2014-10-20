@@ -26,7 +26,8 @@ if(location.protocol=='http:')location.href='https'+location.href.substring(4); 
 jsforce.browser.init({
   clientId: '3MVG9xOCXq4ID1uHdeGOJqq3lgaFOTYcyzWZpWFnHF_3YbxYOevGjDMTglqqsPCrwaVDHL.En4OFljUNv7Wcu', 
   //local//clientId: '3MVG9xOCXq4ID1uHdeGOJqq3lgVmEeA0Tlk_sUdXaOc8k.8kzNgHzSn7QE5hXFUh3Rf3Ihaxbt5kedIVDCOy_', // get this from your connected app oauth configuration: Setup (near username at top)> Build > Create > Apps > Connected Apps: [new] or [edit] your app > API (Enable OAuth Settings)
-  redirectUri: 'https://direct.doodkin.com:8080/',  // on heroku just change the 'http://' to 'https://'. apps on yourapp.herokuapp.com has shared ssl for free.
+  redirectUri: 'https://salesforce-jsforce-proxy.herokuapp.com',
+  //localredirectUri: 'https://direct.doodkin.com:8080/',  // on heroku just change the 'http://' to 'https://'. apps on yourapp.herokuapp.com has shared ssl for free.
   proxyUrl: 'https://salesforce-jsforce-proxy.herokuapp.com/proxy/'}); //salesforce CORS fix, you can keep my url. this proxy has CORS headers for any domain.
   //if you setup salesforce sub domain in salesforce you don't need proxy
 
